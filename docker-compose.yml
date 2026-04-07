@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  bot:
+    build: .
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+      - ./.wwebjs_auth:/app/.wwebjs_auth
+      - ./.wwebjs_cache:/app/.wwebjs_cache
+    env_file:
+      - .env
+    environment:
+      - DRY_RUN=false

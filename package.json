@@ -1,0 +1,46 @@
+{
+  "name": "whatsapp-game-bot",
+  "version": "1.0.0",
+  "description": "WhatsApp bot for scheduling weekly game nights",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "poc:1": "tsx scripts/poc/01-foundation.ts",
+    "poc:2": "tsx scripts/poc/02-dry-run.ts",
+    "poc:3": "tsx scripts/poc/03-poll-flow.ts",
+    "poc:4": "tsx scripts/poc/04-scheduler.ts",
+    "poc:5": "tsx scripts/poc/05-ai-response.ts",
+    "poc:7": "tsx scripts/poc/07-commands.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@ai-sdk/anthropic": "^1.0.0",
+    "@ai-sdk/openai": "^1.0.0",
+    "ai": "^4.0.0",
+    "better-sqlite3": "^11.0.0",
+    "dotenv": "^16.4.0",
+    "node-cron": "^3.0.3",
+    "pino": "^9.0.0",
+    "pino-pretty": "^11.0.0",
+    "qrcode-terminal": "^0.12.0",
+    "uuid": "^10.0.0",
+    "whatsapp-web.js": "^1.26.0",
+    "yaml": "^2.4.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/node": "^24.0.0",
+    "@types/node-cron": "^3.0.0",
+    "@types/uuid": "^10.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^3.0.0"
+  }
+}

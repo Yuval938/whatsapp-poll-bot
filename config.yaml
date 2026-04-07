@@ -1,0 +1,33 @@
+poll:
+  days_to_offer:
+    - "Sunday"
+    - "Monday"
+    - "Tuesday"
+    - "Wednesday"
+    - "Thursday"
+    - "Friday"
+    - "Saturday"
+  allow_multiple_answers: true
+  vote_threshold: 6
+  auto_conclude_if_impossible: true
+
+schedule:
+  poll_create_cron: "0 19 * * 0"       # Sunday 7 PM
+  reminder_cron: "0 12 * * 2"          # Tuesday noon
+  vote_check_cron: "*/30 * * * *"      # Every 30 min
+  poll_deadline_cron: "0 20 * * 3"     # Wednesday 8 PM
+  timezone: "Asia/Jerusalem"
+
+reminder:
+  min_voters_before_reminder: 10
+
+personality:
+  bot_name: "GameBot"
+  base_traits: |
+    אתה בוט קבוצתי של חבר'ה שמשחקים משחקים ביחד כל שבוע.
+    אתה מדבר בעברית, בסגנון לא רשמי וחברי.
+    אתה עוזר לתאם את יום המשחק השבועי.
+    תהיה קצר וקולע, עם קצת הומור.
+  chat_history_window: 50
+  language: "he"
+  max_response_tokens: 300

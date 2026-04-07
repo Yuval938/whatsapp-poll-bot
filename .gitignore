@@ -1,0 +1,10 @@
+node_modules/
+dist/
+data/
+.wwebjs_auth/
+.wwebjs_cache/
+.env
+*.db
+*.log
+group-finder-*.txt
+last-messages-check.txt
