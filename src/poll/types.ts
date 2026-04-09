@@ -1,5 +1,6 @@
 export interface ActivePoll {
   id: string;
+  groupId: string;
   waMessageId: string;
   pollName: string;
   options: string[];

@@ -4,8 +4,8 @@ import { getConfig } from '../config/index.js';
 import { dayNameToHe } from '../utils/date.js';
 import type { VoteTally } from '../poll/types.js';
 
-export async function generatePollAnnouncement(): Promise<string> {
-  const system = buildSystemPrompt();
+export async function generatePollAnnouncement(groupId?: string): Promise<string> {
+  const system = buildSystemPrompt(groupId);
   const prompt = [
     'Write a short opening message for a new weekly game-night poll in a WhatsApp friends group.',
     'Output language: Hebrew only.',
@@ -57,7 +57,7 @@ export async function generateReminder(voterCount: number, tallies: VoteTally[])
   return generate(system, prompt, getConfig().personality.max_response_tokens);
 }
 
-export async function generateMentionResponse(userMessage: string): Promise<string> {
-  const system = buildSystemPrompt();
+export async function generateMentionResponse(userMessage: string, groupId?: string): Promise<string> {
+  const system = buildSystemPrompt(groupId);
   return generate(system, userMessage, getConfig().personality.max_response_tokens);
 }

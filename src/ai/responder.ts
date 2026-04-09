@@ -4,39 +4,47 @@ import { formatTallies } from '../poll/analyzer.js';
 import { dayNameToHe } from '../utils/date.js';
 import { generateMentionResponse } from './prompts.js';
 import { sendReply } from '../whatsapp/actions.js';
+import { getState } from '../storage/repositories/state.repo.js';
 
-// Command patterns (Hebrew + English), tuned to avoid false positives from regular chat.
 const COMMANDS: Array<{ patterns: RegExp[]; handler: (chatId: string, msgId: string) => Promise<string> }> = [
   {
     patterns: [
-      /^(?:צור\s+הצבעה|פתח\s+הצבעה|הצבעה\s+חדשה)(?:\s+בבקשה)?[!?.,]*$/,
+      /^(?:\u05e6\u05d5\u05e8\s+\u05d4\u05e6\u05d1\u05e2\u05d4|\u05e4\u05ea\u05d7\s+\u05d4\u05e6\u05d1\u05e2\u05d4|\u05d4\u05e6\u05d1\u05e2\u05d4\s+\u05d7\u05d3\u05e9\u05d4)(?:\s+\u05d1\u05d1\u05e7\u05e9\u05d4)?[!?.,]*$/,
       /^(?:create\s+poll)(?:\s+please)?[!?.,]*$/i,
     ],
-    handler: async () => {
-      const poll = await createWeeklyPoll();
-      return poll ? 'הצבעה חדשה נוצרה! 🎮' : 'לא הצלחתי ליצור הצבעה 😕';
+    handler: async (chatId: string) => {
+      const poll = await createWeeklyPoll(chatId);
+      return poll ? '\u05d4\u05e6\u05d1\u05e2\u05d4 \u05d7\u05d3\u05e9\u05d4 \u05e0\u05d5\u05e6\u05e8\u05d4! \ud83c\udfae' : '\u05dc\u05d0 \u05d4\u05e6\u05dc\u05d7\u05ea\u05d9 \u05dc\u05d9\u05e6\u05d5\u05e8 \u05d4\u05e6\u05d1\u05e2\u05d4 \ud83d\ude15';
     },
   },
   {
     patterns: [
-      /^(?:סטטוס|מצב|תוצאות)(?:\s+בבקשה)?[!?.,]*$/,
+      /^(?:\u05e1\u05d8\u05d8\u05d5\u05e1|\u05de\u05e6\u05d1|\u05ea\u05d5\u05e6\u05d0\u05d5\u05ea)(?:\s+\u05d1\u05d1\u05e7\u05e9\u05d4)?[!?.,]*$/,
       /^(?:status|results)(?:\s+please)?[!?.,]*$/i,
     ],
-    handler: async () => {
-      const result = getActivePollStatus();
-      if (!result) return 'אין הצבעה פעילה כרגע.';
+    handler: async (chatId: string) => {
+      const result = getActivePollStatus(chatId);
+      if (!result) return '\u05d0\u05d9\u05df \u05d4\u05e6\u05d1\u05e2\u05d4 \u05e4\u05e2\u05d9\u05dc\u05d4 \u05db\u05e8\u05d2\u05e2.';
       const talliesStr = formatTallies(result.tallies, dayNameToHe);
-      return `📊 מצב ההצבעה:\nסה"כ ${result.totalVoters} הצביעו\n${talliesStr}`;
+
+      const lastPollAck = getState(`delivery:last_poll_ack:${chatId}`) ?? 'unknown';
+      const lastCreatePollRun = getState('job:create-poll:last_finished_at') ?? 'unknown';
+
+      return `\ud83d\udcca \u05de\u05e6\u05d1 \u05d4\u05d4\u05e6\u05d1\u05e2\u05d4:\n\u05e1\u05d4"\u05db ${result.totalVoters} \u05d4\u05e6\u05d1\u05d9\u05e2\u05d5\n${talliesStr}\n\n\ud83e\ude7a \u05d1\u05e8\u05d9\u05d0\u05d5\u05ea \u05d1\u05d5\u05d8:\nlast poll ack: ${lastPollAck}\nlast create-poll job: ${lastCreatePollRun}`;
     },
   },
   {
-    patterns: [/^(?:עזרה)(?:\s+בבקשה)?[!?.,]*$/, /^(?:help)(?:\s+please)?[!?.,]*$/i],
-    handler: async () => {
-      return `🤖 פקודות זמינות:
-• צור הצבעה - פותח הצבעה חדשה
-• סטטוס - מציג את מצב ההצבעה
-• עזרה - מציג את ההודעה הזו
-• כל שאלה אחרת - אענה בעזרת AI`;
+    patterns: [
+      /^(?:\u05e2\u05d6\u05e8\u05d4)(?:\s+\u05d1\u05d1\u05e7\u05e9\u05d4)?[!?.,]*$/,
+      /^(?:help)(?:\s+please)?[!?.,]*$/i,
+      /^(?:health)(?:\s+please)?[!?.,]*$/i,
+      /^(?:\u05d1\u05e8\u05d9\u05d0\u05d5\u05ea)(?:\s+\u05d1\u05d1\u05e7\u05e9\u05d4)?[!?.,]*$/,
+    ],
+    handler: async (chatId: string) => {
+      const lastPollAck = getState(`delivery:last_poll_ack:${chatId}`) ?? 'unknown';
+      const lastCreatePollRun = getState('job:create-poll:last_finished_at') ?? 'unknown';
+      const lastReminderRun = getState('job:send-reminder:last_finished_at') ?? 'unknown';
+      return `\ud83e\udd16 \u05e4\u05e7\u05d5\u05d3\u05d5\u05ea \u05d6\u05de\u05d9\u05e0\u05d5\u05ea:\n\u2022 \u05e6\u05d5\u05e8 \u05d4\u05e6\u05d1\u05e2\u05d4 - \u05e4\u05d5\u05ea\u05d7 \u05d4\u05e6\u05d1\u05e2\u05d4 \u05d7\u05d3\u05e9\u05d4\n\u2022 \u05e1\u05d8\u05d8\u05d5\u05e1 - \u05de\u05e6\u05d9\u05d2 \u05d0\u05ea \u05de\u05e6\u05d1 \u05d4\u05d4\u05e6\u05d1\u05e2\u05d4\n\u2022 \u05e2\u05d6\u05e8\u05d4 / health - \u05e2\u05d6\u05e8\u05d4 \u05d5\u05de\u05e6\u05d1 \u05d1\u05d5\u05d8\n\u2022 \u05db\u05dc \u05e9\u05d0\u05dc\u05d4 \u05d0\u05d7\u05e8\u05ea - \u05d0\u05e2\u05e0\u05d4 \u05d1\u05e2\u05d6\u05e8\u05ea AI\n\n\ud83e\ude7a Health:\nlast poll ack: ${lastPollAck}\nlast create-poll: ${lastCreatePollRun}\nlast reminder: ${lastReminderRun}`;
     },
   },
 ];
@@ -61,11 +69,11 @@ export async function handleMention(chatId: string, messageId: string, messageBo
   }
 
   try {
-    const response = await generateMentionResponse(cleanBody);
+    const response = await generateMentionResponse(cleanBody, chatId);
     await sendReply(chatId, messageId, response);
   } catch (err) {
     logger.error({ err }, 'AI response generation failed');
-    await sendReply(chatId, messageId, 'סליחה, משהו השתבש 😅');
+    await sendReply(chatId, messageId, '\u05e1\u05dc\u05d9\u05d7\u05d4, \u05de\u05e9\u05d4\u05d5 \u05d4\u05e9\u05ea\u05d1\u05e9 \ud83d\ude05');
   }
 }
 

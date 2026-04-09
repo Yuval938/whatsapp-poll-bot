@@ -1,8 +1,7 @@
-import { getEnv } from '../config/index.js';
+﻿import { getEnv } from '../config/index.js';
 import { getLogger } from '../utils/logger.js';
 import { EventEmitter } from 'events';
 
-// Interface for WhatsApp client (real or mock)
 export interface BotClient extends EventEmitter {
   sendMessage(chatId: string, content: any, options?: any): Promise<{ id: { _serialized: string } }>;
   getMessageById?(messageId: string): Promise<any>;
@@ -13,20 +12,19 @@ export interface BotClient extends EventEmitter {
 }
 
 let _client: BotClient | null = null;
-let _botId: string = 'bot@c.us';
+let _botId = 'bot@c.us';
 
 export async function initClient(): Promise<BotClient> {
   const logger = getLogger();
   const env = getEnv();
 
   if (env.DRY_RUN) {
-    logger.info('DRY RUN mode — using mock WhatsApp client');
+    logger.info('DRY RUN mode - using mock WhatsApp client');
     _client = createMockClient();
     _botId = 'mock-bot@c.us';
     return _client;
   }
 
-  // Real WhatsApp client
   const wweb = await import('whatsapp-web.js');
   const ClientCtor = (wweb as any).Client ?? (wweb as any).default?.Client;
   const LocalAuthCtor = (wweb as any).LocalAuth ?? (wweb as any).default?.LocalAuth;
@@ -36,8 +34,7 @@ export async function initClient(): Promise<BotClient> {
   const qrcode = await import('qrcode-terminal');
 
   const client = new ClientCtor({
-    // Reuse the authenticated session profile.
-    authStrategy: new LocalAuthCtor({ clientId: 'group-finder' }),
+    authStrategy: new LocalAuthCtor({ clientId: env.WHATSAPP_CLIENT_ID }),
     puppeteer: {
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -77,8 +74,6 @@ export function getBotId(): string {
   return _botId;
 }
 
-// --- Mock client for dry-run mode ---
-
 function createMockClient(): BotClient {
   const logger = getLogger();
   const emitter = new EventEmitter() as BotClient;
@@ -108,9 +103,7 @@ function createMockClient(): BotClient {
   return emitter;
 }
 
-// --- Simulate incoming events (for dry-run testing) ---
-
-export function simulateMessage(senderId: string, senderName: string, body: string, mentionsBot: boolean = false): void {
+export function simulateMessage(senderId: string, senderName: string, body: string, mentionsBot = false): void {
   const client = getClient();
   const mockMsg = {
     id: { _serialized: `mock-incoming-${Date.now()}` },

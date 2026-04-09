@@ -36,11 +36,14 @@ export const configSchema = z.object({
 
 export const envSchema = z.object({
   WHATSAPP_GROUP_ID: z.string().min(1),
+  WHATSAPP_GROUP_IDS: z.string().optional().default(''),
+  WHATSAPP_CLIENT_ID: z.string().default('game-bot'),
   DRY_RUN: z.string().transform(v => v === 'true').default('true'),
   AI_PROVIDER: z.enum(['anthropic', 'openai']).default('anthropic'),
   AI_MODEL: z.string().default('claude-sonnet-4-20250514'),
   ANTHROPIC_API_KEY: z.string().default(''),
   OPENAI_API_KEY: z.string().default(''),
+  GROUP_SIZE_ESTIMATE: z.coerce.number().int().min(1).default(20),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 });
 

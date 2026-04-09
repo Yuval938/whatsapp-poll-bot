@@ -33,6 +33,18 @@ export function getEnv(): EnvConfig {
   return _env;
 }
 
+export function getTargetGroupIds(): string[] {
+  const env = getEnv();
+  const fromList = env.WHATSAPP_GROUP_IDS
+    .split(',')
+    .map(v => v.trim())
+    .filter(Boolean);
+
+  // Keep primary group first, then any additional groups (unique).
+  const merged = [env.WHATSAPP_GROUP_ID, ...fromList];
+  return [...new Set(merged)];
+}
+
 export function resetConfig(): void {
   _config = null;
   _env = null;

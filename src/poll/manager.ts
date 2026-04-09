@@ -8,19 +8,20 @@ import { sendPoll, sendMessage } from '../whatsapp/actions.js';
 import { generatePollAnnouncement, generateGameConfirmed, generateNoGame } from '../ai/prompts.js';
 import type { ActivePoll, PollResult } from './types.js';
 
-export async function createWeeklyPoll(): Promise<ActivePoll | null> {
+export async function createWeeklyPoll(groupId?: string): Promise<ActivePoll | null> {
   const logger = getLogger();
   const config = getConfig();
   const env = getEnv();
+  const targetGroupId = groupId ?? env.WHATSAPP_GROUP_ID;
 
-  const expired = pollRepo.expireAllActivePolls();
+  const expired = pollRepo.expireAllActivePolls(targetGroupId);
   if (expired > 0) {
-    logger.info({ expired }, 'Expired previous active polls');
+    logger.info({ expired, groupId: targetGroupId }, 'Expired previous active polls');
   }
 
   let announcement: string;
   try {
-    announcement = await generatePollAnnouncement();
+    announcement = await generatePollAnnouncement(targetGroupId);
   } catch (err) {
     logger.warn({ err }, 'Failed to generate AI announcement, using default');
     announcement = 'חברים, פותחים סקר לשבוע הקרוב 🎮';
@@ -30,12 +31,12 @@ export async function createWeeklyPoll(): Promise<ActivePoll | null> {
   const options = config.poll.days_to_offer;
   const deadline = getDeadline(config.schedule.timezone, config.schedule.poll_deadline_cron);
 
-  await sendMessage(env.WHATSAPP_GROUP_ID, announcement);
+  await sendMessage(targetGroupId, announcement);
 
   let waMessageId: string;
   try {
     waMessageId = await sendPoll(
-      env.WHATSAPP_GROUP_ID,
+      targetGroupId,
       pollName,
       allDaysToHe(options),
       { allowMultipleAnswers: config.poll.allow_multiple_answers }
@@ -43,13 +44,14 @@ export async function createWeeklyPoll(): Promise<ActivePoll | null> {
   } catch (err) {
     logger.error({ err }, 'Poll send failed');
     await sendMessage(
-      env.WHATSAPP_GROUP_ID,
+      targetGroupId,
       'לא הצלחתי לפרסם סקר וואטסאפ כרגע. נסו שוב עוד כמה דקות או פתחו ידנית.'
     );
     return null;
   }
 
   const poll = pollRepo.createPoll({
+    groupId: targetGroupId,
     waMessageId,
     pollName,
     options,
@@ -81,9 +83,10 @@ export async function checkAndConclude(poll?: ActivePoll): Promise<PollResult | 
   const env = getEnv();
 
   if (!poll) {
-    poll = pollRepo.getActivePoll() ?? undefined;
+    poll = pollRepo.getActivePoll(env.WHATSAPP_GROUP_ID) ?? undefined;
   }
   if (!poll || poll.status !== 'active') return null;
+  const targetGroupId = poll.groupId || env.WHATSAPP_GROUP_ID;
 
   const result = analyzePoll(poll);
 
@@ -93,11 +96,11 @@ export async function checkAndConclude(poll?: ActivePoll): Promise<PollResult | 
 
     try {
       const message = await generateGameConfirmed(result.winningDay.day, result.winningDay.voters);
-      await sendMessage(env.WHATSAPP_GROUP_ID, message);
+      await sendMessage(targetGroupId, message);
     } catch (err) {
       logger.warn({ err }, 'Failed to generate AI confirmation, using default');
       const dayHe = dayNameToHe(result.winningDay.day);
-      await sendMessage(env.WHATSAPP_GROUP_ID, `🎮 נקבע! משחקים ביום ${dayHe}! (${result.winningDay.count} הצבעות)`);
+      await sendMessage(targetGroupId, `🎮 נקבע! משחקים ביום ${dayHe}! (${result.winningDay.count} הצבעות)`);
     }
 
     return result;
@@ -109,10 +112,10 @@ export async function checkAndConclude(poll?: ActivePoll): Promise<PollResult | 
 
     try {
       const message = await generateNoGame(result.tallies);
-      await sendMessage(env.WHATSAPP_GROUP_ID, message);
+      await sendMessage(targetGroupId, message);
     } catch (err) {
       logger.warn({ err }, 'Failed to generate AI no-game message, using default');
-      await sendMessage(env.WHATSAPP_GROUP_ID, '😢 לא היו מספיק הצבעות השבוע, אין משחק.');
+      await sendMessage(targetGroupId, '😢 לא היו מספיק הצבעות השבוע, אין משחק.');
     }
 
     return result;
@@ -121,8 +124,8 @@ export async function checkAndConclude(poll?: ActivePoll): Promise<PollResult | 
   return result;
 }
 
-export function getActivePollStatus(): PollResult | null {
-  const poll = pollRepo.getActivePoll();
+export function getActivePollStatus(groupId?: string): PollResult | null {
+  const poll = pollRepo.getActivePoll(groupId);
   if (!poll) return null;
   return analyzePoll(poll);
 }

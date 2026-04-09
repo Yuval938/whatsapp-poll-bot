@@ -1,5 +1,5 @@
 import { getLogger } from '../utils/logger.js';
-import { getEnv } from '../config/index.js';
+import { getTargetGroupIds } from '../config/index.js';
 import { getBotId, type BotClient } from './client.js';
 import { insertChatMessage } from '../storage/repositories/chat.repo.js';
 import { handleVote } from '../poll/manager.js';
@@ -7,15 +7,14 @@ import { handleMention, parseCommand } from '../ai/responder.js';
 
 export function registerEventHandlers(client: BotClient): void {
   const logger = getLogger();
-  const env = getEnv();
-  const groupId = env.WHATSAPP_GROUP_ID;
+  const allowedGroupIds = new Set(getTargetGroupIds());
 
   // --- Handle incoming messages ---
   client.on('message', async (msg: any) => {
     try {
       // Only process messages from the target group
       const chatId = msg.from;
-      if (chatId !== groupId) return;
+      if (!allowedGroupIds.has(chatId)) return;
 
       const senderId = msg.author ?? msg.from;
       const contact = await msg.getContact?.();
@@ -34,7 +33,7 @@ export function registerEventHandlers(client: BotClient): void {
       const isDirectCommand = parseCommand(body) !== null;
 
       if (isMentioned || isDirectCommand) {
-        logger.info({ senderId, body }, 'Bot was mentioned');
+        logger.info({ senderId, body, isMentioned, isDirectCommand, chatId }, 'Handling bot interaction');
         await handleMention(chatId, msg.id._serialized, body, senderId);
       }
     } catch (err) {

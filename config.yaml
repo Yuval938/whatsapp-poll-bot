@@ -1,4 +1,4 @@
-poll:
+﻿poll:
   days_to_offer:
     - "Sunday"
     - "Monday"
@@ -24,10 +24,10 @@ reminder:
 personality:
   bot_name: "GameBot"
   base_traits: |
-    אתה בוט קבוצתי של חבר'ה שמשחקים משחקים ביחד כל שבוע.
-    אתה מדבר בעברית, בסגנון לא רשמי וחברי.
-    אתה עוזר לתאם את יום המשחק השבועי.
-    תהיה קצר וקולע, עם קצת הומור.
+    You are a friendly game-night group bot.
+    Always answer in Hebrew.
+    Tone: casual, concise, and lightly humorous.
+    Help the group coordinate weekly play days and keep responses practical.
   chat_history_window: 50
   language: "he"
   max_response_tokens: 300

@@ -1,4 +1,4 @@
-import { loadConfig, loadEnv, getEnv } from './config/index.js';
+﻿import { loadConfig, loadEnv, getEnv } from './config/index.js';
 import { initLogger, getLogger } from './utils/logger.js';
 import { initDatabase, closeDatabase } from './storage/database.js';
 import { initClient, getClient } from './whatsapp/client.js';
@@ -8,40 +8,38 @@ import { createInterface } from 'readline';
 import { simulateMessage, simulateVote } from './whatsapp/client.js';
 
 async function main(): Promise<void> {
-  // Step 1: Load configuration
-  const config = loadConfig();
+  loadConfig();
   const env = loadEnv();
   const logger = initLogger(env.LOG_LEVEL);
 
   logger.info('=== WhatsApp Game Night Bot ===');
-  logger.info({ dryRun: env.DRY_RUN, aiProvider: env.AI_PROVIDER, aiModel: env.AI_MODEL }, 'Configuration loaded');
+  logger.info({
+    dryRun: env.DRY_RUN,
+    aiProvider: env.AI_PROVIDER,
+    aiModel: env.AI_MODEL,
+    clientId: env.WHATSAPP_CLIENT_ID,
+  }, 'Configuration loaded');
 
-  // Step 2: Initialize database
   initDatabase();
 
-  // Step 3: Initialize WhatsApp client
   const client = await initClient();
-
-  // Step 4: Register event handlers
   registerEventHandlers(client);
-
-  // Step 5: Start scheduler
   startScheduler();
 
-  // Step 6: If dry-run, start interactive CLI for testing
   if (env.DRY_RUN) {
     startDryRunCLI();
   }
 
   logger.info('Bot is running. Press Ctrl+C to stop.');
 
-  // Graceful shutdown
   const shutdown = async () => {
     logger.info('Shutting down...');
     stopScheduler();
     try {
       await getClient().destroy();
-    } catch {}
+    } catch {
+      // noop
+    }
     closeDatabase();
     logger.info('Goodbye!');
     process.exit(0);
@@ -53,16 +51,15 @@ async function main(): Promise<void> {
 
 function startDryRunCLI(): void {
   const logger = getLogger();
-  const env = getEnv();
 
   const rl = createInterface({ input: process.stdin, output: process.stdout });
 
   logger.info('--- Dry-Run CLI ---');
   logger.info('Commands:');
-  logger.info('  msg <text>          — simulate an incoming message');
-  logger.info('  mention <text>      — simulate a message that mentions the bot');
-  logger.info('  vote <msgId> <days> — simulate a vote (e.g., vote mock-msg-1 Monday,Wednesday)');
-  logger.info('  quit                — exit');
+  logger.info('  msg <text>          - simulate an incoming message');
+  logger.info('  mention <text>      - simulate a message that mentions the bot');
+  logger.info('  vote <msgId> <days> - simulate a vote (e.g., vote mock-msg-1 Monday,Wednesday)');
+  logger.info('  quit                - exit');
 
   rl.on('line', async (line: string) => {
     const trimmed = line.trim();

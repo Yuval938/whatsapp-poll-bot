@@ -29,11 +29,11 @@ export async function generate(
   // Check if API key is configured
   if (env.AI_PROVIDER === 'anthropic' && !env.ANTHROPIC_API_KEY) {
     logger.warn('No Anthropic API key configured, returning fallback');
-    return '[AI not configured]';
+    return 'אין כרגע חיבור ל-AI, אבל אני עדיין כאן לפקודות בסיסיות.';
   }
   if (env.AI_PROVIDER === 'openai' && !env.OPENAI_API_KEY) {
     logger.warn('No OpenAI API key configured, returning fallback');
-    return '[AI not configured]';
+    return 'אין כרגע חיבור ל-AI, אבל אני עדיין כאן לפקודות בסיסיות.';
   }
 
   try {

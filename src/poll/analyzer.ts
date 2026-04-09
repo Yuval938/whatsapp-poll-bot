@@ -1,22 +1,20 @@
-import { getConfig } from '../config/index.js';
+﻿import { getConfig, getEnv } from '../config/index.js';
 import { getTalliesForPoll, getUniqueVoterCount } from '../storage/repositories/vote.repo.js';
 import type { ActivePoll, PollResult, VoteTally } from './types.js';
 
-const MAX_GROUP_SIZE = 20; // Approximate group size for impossibility calculation
-
 export function analyzePoll(poll: ActivePoll): PollResult {
   const config = getConfig();
+  const env = getEnv();
   const threshold = config.poll.vote_threshold;
   const tallies = getTalliesForPoll(poll.id);
   const totalVoters = getUniqueVoterCount(poll.id);
 
-  // Find the day with the most votes
-  const winningDay = tallies.length > 0 ? tallies[0] : null; // Already sorted desc by count
+  const winningDay = tallies.length > 0 ? tallies[0] : null;
   const isThresholdMet = winningDay !== null && winningDay.count >= threshold;
 
-  // Check if it's mathematically impossible for any day to reach the threshold
-  // Conservative: assume all remaining group members could still vote for any single day
-  const remainingPotentialVoters = Math.max(0, MAX_GROUP_SIZE - totalVoters);
+  // Conservative impossibility check based on estimated group size.
+  const maxGroupSize = env.GROUP_SIZE_ESTIMATE;
+  const remainingPotentialVoters = Math.max(0, maxGroupSize - totalVoters);
   const bestPossible = (winningDay?.count ?? 0) + remainingPotentialVoters;
   const isImpossible = bestPossible < threshold && totalVoters > 0;
 
@@ -31,21 +29,20 @@ export function analyzePoll(poll: ActivePoll): PollResult {
 }
 
 export function formatTalliesHe(tallies: VoteTally[]): string {
-  if (tallies.length === 0) return 'אין הצבעות עדיין';
+  if (tallies.length === 0) return '\u05d0\u05d9\u05df \u05d4\u05e6\u05d1\u05e2\u05d5\u05ea \u05e2\u05d3\u05d9\u05d9\u05df';
 
   return tallies
     .map(t => {
       const { dayNameToHe } = require('../utils/date.js');
       const dayHe = dayNameToHe(t.day);
-      return `יום ${dayHe}: ${t.count} הצבעות (${t.voters.join(', ')})`;
+      return `\u05d9\u05d5\u05dd ${dayHe}: ${t.count} \u05d4\u05e6\u05d1\u05e2\u05d5\u05ea (${t.voters.join(', ')})`;
     })
     .join('\n');
 }
 
-// Pure function version for testing (no imports from date.ts)
 export function formatTallies(tallies: VoteTally[], dayFormatter: (day: string) => string = d => d): string {
-  if (tallies.length === 0) return 'אין הצבעות עדיין';
+  if (tallies.length === 0) return '\u05d0\u05d9\u05df \u05d4\u05e6\u05d1\u05e2\u05d5\u05ea \u05e2\u05d3\u05d9\u05d9\u05df';
   return tallies
-    .map(t => `יום ${dayFormatter(t.day)}: ${t.count} הצבעות (${t.voters.join(', ')})`)
+    .map(t => `\u05d9\u05d5\u05dd ${dayFormatter(t.day)}: ${t.count} \u05d4\u05e6\u05d1\u05e2\u05d5\u05ea (${t.voters.join(', ')})`)
     .join('\n');
 }

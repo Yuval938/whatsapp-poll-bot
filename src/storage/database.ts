@@ -50,6 +50,14 @@ const MIGRATIONS: Array<{ version: number; name: string; sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_chat_ts ON chat_history(timestamp);
     `,
   },
+  {
+    version: 2,
+    name: 'poll-group-id',
+    sql: `
+      ALTER TABLE polls ADD COLUMN group_id TEXT NOT NULL DEFAULT '';
+      CREATE INDEX IF NOT EXISTS idx_polls_group_status ON polls(group_id, status);
+    `,
+  },
 ];
 
 export function initDatabase(dbPath?: string): Database.Database {
