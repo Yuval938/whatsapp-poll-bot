@@ -149,6 +149,22 @@ Important variables:
 - `AI_MODEL`
 - `OPENAI_API_KEY` or `ANTHROPIC_API_KEY`
 
+## Secret Safety
+
+The repo is now protected by:
+- local pre-commit secret scan (`.husky/pre-commit`)
+- CI secret scan (`.github/workflows/secret-scan.yml`)
+- `secretlint` rules (`.secretlintrc.json`)
+
+Run manually:
+```bash
+npm run secrets:scan
+```
+
+Notes:
+- `.env` is intentionally ignored by secret scanner for local dev.
+- Never commit real keys to tracked files.
+
 ## Local Run
 
 1. Install deps:

@@ -8,3 +8,4 @@ data/
 *.log
 group-finder-*.txt
 last-messages-check.txt
+.husky/_
